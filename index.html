@@ -2,21 +2,81 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Superhot ARG</title>
-<link rel="stylesheet" href="style.css">
+<title>ARG OS</title>
+<style>
+/* Reset & basic */
+body, html { margin:0; padding:0; width:100%; height:100%; font-family: monospace; background:black; overflow:hidden; }
+.hidden { display:none; }
+
+/* Boot screen */
+#boot { display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%; color:lime; background:black; }
+#boot p { margin:5px; }
+
+/* Login screen */
+#login { display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%; color:lime; background:#111; }
+#login-box { display:flex; flex-direction:column; padding:20px; border:2px solid lime; background:#000000cc; }
+#login-box input { margin:5px; padding:5px; background:black; color:lime; border:1px solid lime; }
+#login-box button { margin-top:10px; padding:5px; cursor:pointer; }
+
+/* Desktop */
+#desktop { display:flex; flex-wrap:wrap; padding:20px; gap:30px; background:#222; height:100%; width:100%; position:absolute; top:0; left:0; }
+.icon { width:80px; text-align:center; color:lime; cursor:pointer; user-select:none; }
+.icon:hover { color:red; }
+
+/* Taskbar */
+#taskbar { position:absolute; bottom:0; left:0; width:100%; height:30px; background:#111; color:lime; display:flex; justify-content:space-between; align-items:center; padding:0 10px; font-size:14px; }
+
+/* Chat */
+#chat { display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%; background:#111; }
+.chat-box { width:400px; height:300px; border:2px solid lime; padding:10px; overflow-y:auto; background:#000000cc; }
+.chat-input { margin-top:10px; width:400px; padding:8px; background:black; color:lime; border:1px solid lime; cursor:pointer; }
+
+/* Download */
+#download { display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%; background:#111; }
+#download-bar { width:300px; height:20px; border:2px solid lime; margin-top:20px; }
+#progress { height:100%; width:0%; background:lime; }
+
+/* Game */
+#game { display:flex; justify-content:center; align-items:center; height:100%; width:100%; position:absolute; top:0; left:0; }
+canvas { background:#111; display:block; }
+#hint { position:absolute; top:10px; left:10px; color:red; }
+
+</style>
 </head>
 <body>
 
-<!-- Stage 1: Desktop -->
-<div id="desktop">
-  <div class="icon" onclick="startPictoChat()">📱 Picto Chat</div>
-  <div class="icon">⚙️ Settings</div>
-  <div class="icon">📂 Documents</div>
-  <div class="icon">🖥 Applications</div>
+<!-- Boot -->
+<div id="boot">
+  <p>Initializing OS...</p>
+  <p>Loading drivers...</p>
+  <p id="boot-msg">Starting up...</p>
 </div>
 
-<!-- Stage 2: Chat Interface -->
-<div id="chat">
+<!-- Login -->
+<div id="login" class="hidden">
+  <div id="login-box">
+    <label>Username:</label>
+    <input id="username" placeholder="Enter username">
+    <label>Password:</label>
+    <input id="password" type="password" placeholder="Enter password">
+    <button onclick="login()">Login</button>
+  </div>
+</div>
+
+<!-- Desktop -->
+<div id="desktop" class="hidden">
+  <div class="icon" onclick="startPictoChat()">📱 Picto Chat</div>
+  <div class="icon" onclick="alert('Settings not responding')">⚙️ Settings</div>
+  <div class="icon" onclick="alert('Documents not responding')">📂 Documents</div>
+  <div class="icon" onclick="alert('Applications not responding')">🖥 Applications</div>
+  <div id="taskbar">
+    <div>Start</div>
+    <div id="clock"></div>
+  </div>
+</div>
+
+<!-- Chat -->
+<div id="chat" class="hidden">
   <div class="chat-box" id="chatBox">
     <p><strong>Friend1:</strong> Hey, check out this new game I found!</p>
     <p><strong>You:</strong> Oh cool, what's it called?</p>
@@ -25,152 +85,125 @@
   <input class="chat-input" id="chatInput" placeholder="Click to start the game" readonly onclick="startDownload()">
 </div>
 
-<!-- Stage 3: Fake Download -->
-<div id="download">
+<!-- Download -->
+<div id="download" class="hidden">
   <h2 style="text-align:center;">Downloading Game...</h2>
   <div id="download-bar"><div id="progress"></div></div>
   <p id="status" style="text-align:center; margin-top:10px;">Initializing...</p>
 </div>
 
-<!-- Stage 4: 2D Superhot-style Game -->
-<div id="game">
+<!-- Game -->
+<div id="game" class="hidden">
   <canvas id="gameCanvas" width="600" height="400"></canvas>
   <p id="hint"></p>
 </div>
 
 <script>
-// --- Stage 1: Desktop to Chat ---
-function startPictoChat() {
-  document.getElementById('desktop').style.display = 'none';
-  document.getElementById('chat').style.display = 'flex';
+// --- Boot / Login sequence ---
+let bootMsgs = ["Starting up...", "Loading drivers...", "Checking system...", "Initializing UI...", "Ready"];
+let bootIndex = 0;
+let bootInterval = setInterval(()=>{
+  document.getElementById('boot-msg').textContent = bootMsgs[bootIndex];
+  bootIndex++;
+  if(bootIndex >= bootMsgs.length){
+    clearInterval(bootInterval);
+    setTimeout(()=>{
+      document.getElementById('boot').classList.add('hidden');
+      document.getElementById('login').classList.remove('hidden');
+    },1000);
+  }
+},1000);
+
+// --- Login ---
+function login(){
+  let user = document.getElementById('username').value || "USER";
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('desktop').classList.remove('hidden');
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString();
 }
 
-// --- Stage 2: Chat to Download ---
+// Clock update
+setInterval(()=>{
+  if(document.getElementById('clock')) document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+},1000);
+
+// --- Picto Chat Trigger ---
+function startPictoChat(){
+  document.getElementById('desktop').classList.add('hidden');
+  document.getElementById('chat').classList.remove('hidden');
+}
+
+// --- Chat to Download ---
 function startDownload() {
-  document.getElementById('chat').style.display = 'none';
-  document.getElementById('download').style.display = 'block';
+  document.getElementById('chat').classList.add('hidden');
+  document.getElementById('download').classList.remove('hidden');
   let progress = 0;
   let status = document.getElementById('status');
   let interval = setInterval(() => {
-    progress += Math.floor(Math.random() * 5) + 1;
-    if(progress > 100) progress = 100;
+    progress += Math.floor(Math.random()*5)+1;
+    if(progress>100) progress=100;
     document.getElementById('progress').style.width = progress + '%';
-    const msgs = [
-      "Verifying files...",
-      "Scanning system...",
-      "Warning: Unrecognized content detected...",
-      "Decrypting assets...",
-      "Initializing AI routines..."
-    ];
-    if(progress % 20 === 0) {
-      status.textContent = msgs[Math.floor(Math.random() * msgs.length)];
-    }
-    if(progress >= 100) {
+    const msgs = ["Verifying files...","Scanning system...","Warning: Unrecognized content detected...","Decrypting assets...","Initializing AI routines..."];
+    if(progress % 20 ===0) status.textContent = msgs[Math.floor(Math.random()*msgs.length)];
+    if(progress>=100){
       clearInterval(interval);
-      setTimeout(startGame, 1000);
+      setTimeout(startGame,1000);
     }
-  }, 300);
+  },300);
 }
 
-// --- Stage 3: Superhot-style Game ---
-function startGame() {
-  document.getElementById('download').style.display = 'none';
-  document.getElementById('game').style.display = 'block';
-  
+// --- 2D Superhot-style Game ---
+function startGame(){
+  document.getElementById('download').classList.add('hidden');
+  document.getElementById('game').classList.remove('hidden');
+
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
-  const width = canvas.width;
-  const height = canvas.height;
+  const width = canvas.width, height = canvas.height;
 
-  let player = { x: width/2, y: height/2, size: 20, speed: 2 };
-  let bullets = [];
-  let enemies = [];
-  let keys = {};
-  let timeMoving = false;
+  let player = {x:width/2,y:height/2,size:20,speed:2};
+  let bullets = [], enemies=[], keys={}, timeMoving=false;
 
-  // Spawn initial enemies
-  function spawnEnemy() {
-    let x = Math.random() * width;
-    let y = Math.random() * height;
-    enemies.push({x,y,size:20});
-  }
+  function spawnEnemy(){ enemies.push({x:Math.random()*width,y:Math.random()*height,size:20}); }
   for(let i=0;i<5;i++) spawnEnemy();
 
   document.addEventListener('keydown', e=>keys[e.key]=true);
   document.addEventListener('keyup', e=>keys[e.key]=false);
+  document.addEventListener('click', e=>{ bullets.push({x:player.x, y:player.y, dx:(e.clientX-width/2)/50, dy:(e.clientY-height/2)/50}); });
 
-  // Shooting bullets
-  document.addEventListener('click', e=>{
-    bullets.push({x:player.x, y:player.y, dx:(e.clientX-width/2)/50, dy:(e.clientY-height/2)/50});
-  });
+  function update(){
+    timeMoving=false;
+    if(keys['ArrowUp']||keys['w']) {player.y-=player.speed; timeMoving=true;}
+    if(keys['ArrowDown']||keys['s']) {player.y+=player.speed; timeMoving=true;}
+    if(keys['ArrowLeft']||keys['a']) {player.x-=player.speed; timeMoving=true;}
+    if(keys['ArrowRight']||keys['d']) {player.x+=player.speed; timeMoving=true;}
 
-  function update() {
-    timeMoving = false;
-    if(keys['ArrowUp']||keys['w']) { player.y -= player.speed; timeMoving=true; }
-    if(keys['ArrowDown']||keys['s']) { player.y += player.speed; timeMoving=true; }
-    if(keys['ArrowLeft']||keys['a']) { player.x -= player.speed; timeMoving=true; }
-    if(keys['ArrowRight']||keys['d']) { player.x += player.speed; timeMoving=true; }
+    bullets.forEach((b,i)=>{ b.x+=b.dx; b.y+=b.dy; if(b.x<0||b.x>width||b.y<0||b.y>height) bullets.splice(i,1); });
 
-    // Update bullets
-    bullets.forEach((b,i)=>{
-      b.x += b.dx;
-      b.y += b.dy;
-      if(b.x<0||b.x>width||b.y<0||b.y>height) bullets.splice(i,1);
-    });
-
-    // Enemies move only when player moves
     if(timeMoving){
       enemies.forEach(e=>{
-        let dx = player.x - e.x;
-        let dy = player.y - e.y;
-        let dist = Math.sqrt(dx*dx + dy*dy);
-        e.x += (dx/dist)*0.5;
-        e.y += (dy/dist)*0.5;
+        let dx = player.x - e.x, dy = player.y - e.y, dist=Math.sqrt(dx*dx+dy*dy);
+        e.x += (dx/dist)*0.5; e.y += (dy/dist)*0.5;
       });
     }
 
-    // Check collisions
     enemies.forEach((e,i)=>{
       bullets.forEach((b,j)=>{
-        let dx = e.x - b.x;
-        let dy = e.y - b.y;
-        if(Math.sqrt(dx*dx + dy*dy) < e.size/2){
-          enemies.splice(i,1);
-          bullets.splice(j,1);
-          spawnEnemy();
-        }
+        let dx=e.x-b.x, dy=e.y-b.y;
+        if(Math.sqrt(dx*dx+dy*dy)<e.size/2){ enemies.splice(i,1); bullets.splice(j,1); spawnEnemy(); }
       });
     });
   }
 
-  function draw() {
-    ctx.fillStyle = '#111';
-    ctx.fillRect(0,0,width,height);
-
-    // Draw player
-    ctx.fillStyle = 'lime';
-    ctx.fillRect(player.x-player.size/2, player.y-player.size/2, player.size, player.size);
-
-    // Draw bullets
-    ctx.fillStyle = 'yellow';
-    bullets.forEach(b=>ctx.fillRect(b.x-2,b.y-2,4,4));
-
-    // Draw enemies
-    ctx.fillStyle = 'red';
-    enemies.forEach(e=>ctx.fillRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size));
-
-    // Creepy overlay hints
-    if(Math.random()<0.005){
-      document.getElementById('hint').textContent = "Something is watching...";
-      setTimeout(()=>{document.getElementById('hint').textContent='';},1000);
-    }
+  function draw(){
+    ctx.fillStyle='#111'; ctx.fillRect(0,0,width,height);
+    ctx.fillStyle='lime'; ctx.fillRect(player.x-player.size/2,player.y-player.size/2,player.size,player.size);
+    ctx.fillStyle='yellow'; bullets.forEach(b=>ctx.fillRect(b.x-2,b.y-2,4,4));
+    ctx.fillStyle='red'; enemies.forEach(e=>ctx.fillRect(e.x-e.size/2,e.y-e.size/2,e.size,e.size));
+    if(Math.random()<0.005){ document.getElementById('hint').textContent="Something is watching..."; setTimeout(()=>{document.getElementById('hint').textContent='';},1000); }
   }
 
-  function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
-  }
+  function loop(){ update(); draw(); requestAnimationFrame(loop); }
   loop();
 }
 </script>
